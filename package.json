@@ -1,0 +1,39 @@
+{
+  "name": "library-of-babel",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "test": "node core.test.mjs && node location.test.mjs"
+  },
+  "dependencies": {
+    "@fontsource/eb-garamond": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/libre-caslon-display": "^5.3.0",
+    "@react-three/fiber": "^9.7.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4",
+    "oxlint": "^1.75.0",
+    "vite": "^8.2.0"
+  },
+  "description": "The Library of Babel after Borges: every page of 3,200 characters, computed in the browser, with an engraved walk to the shelf.",
+  "license": "MIT",
+  "homepage": "https://babel.nordic-sys.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nordic-sys/library-of-babel.git"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

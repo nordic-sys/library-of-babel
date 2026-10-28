@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Library of Babel</title>
+    <meta name="description" content="Every page of 3,200 characters is already on a shelf here. Write a line, and the library will tell you where it stands." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="The Library of Babel" />
+    <meta property="og:description" content="Every page of 3,200 characters is already on a shelf here. Write a line, and the library will tell you where it stands." />
+    <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#EEE6D3" />
+    <script>
+      /* A téma még a React előtt: sötét módban ne villanjon fel a papír (lásd src/theme.js). */
+      try {
+        var t = localStorage.getItem('babel_theme');
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+        if ((t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark') {
+          document.querySelector('meta[name="theme-color"]').content = '#14110D';
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

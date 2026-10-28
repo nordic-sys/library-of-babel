@@ -1,0 +1,1245 @@
+/*
+ * The Library of Babel — „1941-es kiadás”.
+ * Papír, tinta, egyetlen rubrikapiros, ami KIZÁRÓLAG a helyet jelöli (találat, cél-hatszög,
+ * szalag). A linkek tintaszínűek és aláhúzottak. Részletek: docs/DESIGN.md.
+ */
+:root {
+  --paper: #EEE6D3;
+  --paper-2: #E4DBC6;
+  --table: #D6CCB6;
+  --leaf: #F3ECDD;
+  --field: #F6F0E2;
+  --cover: #2E3B32;
+  --ink: #1D1A16;
+  --ink-page: #26221C;
+  --ink-2: #4F483D;
+  --ink-3: #6B6255;
+  --placeholder: #655C4D;
+  --rule: #C9BD9F;
+  --rubric: #8F2A19;
+  /* A felület (nem a lap) pirosa: világos papíron azonos, sötéten világosabb, hogy látsszon. */
+  --rubric-ui: #8F2A19;
+  --plan-wall: #E2D7BF;
+  --plan-shaft: #FBF7EE;
+  --leaf-blank: #EFE7D6;
+  --walk-paper: #E9E0CB;
+  --btn-hover: #000;
+  /* A lapon a tinta mindig sötét: a könyv papír marad sötét módban is. */
+  --paper-ink: #1D1A16;
+  --paper-ink-2: #4F483D;
+
+  --serif: 'EB Garamond', Georgia, serif;
+  --display: 'Libre Caslon Display', 'EB Garamond', Georgia, serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+  color-scheme: light;
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--paper);
+  font-synthesis: none;
+  font-variant-numeric: oldstyle-nums;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Lámpafény (sötét mód): sötét asztal, a könyv lapja papír marad.
+ * Alapból a rendszer beállítását követi; a lábléc kapcsolója data-theme-mel felülírja.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #14110D;
+    --paper-2: #1C1813;
+    --table: #100D0A;
+    --leaf: #E3D8C0;
+    --field: #1F1A14;
+    --cover: #1E2620;
+    --ink: #E8E0CE;
+    --ink-2: #CFC6B2;
+    --ink-3: #A79D89;
+    --placeholder: #9C9280;
+    --rule: #4A4034;
+    --rubric-ui: #D0664E;
+    --plan-wall: #2A241C;
+    --plan-shaft: #0C0A08;
+    --leaf-blank: #D8CCB2;
+    --walk-paper: #14110D;
+    --btn-hover: #FFF8EA;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --paper: #14110D;
+  --paper-2: #1C1813;
+  --table: #100D0A;
+  --leaf: #E3D8C0;
+  --field: #1F1A14;
+  --cover: #1E2620;
+  --ink: #E8E0CE;
+  --ink-2: #CFC6B2;
+  --ink-3: #A79D89;
+  --placeholder: #9C9280;
+  --rule: #4A4034;
+  --rubric-ui: #D0664E;
+  --plan-wall: #2A241C;
+  --plan-shaft: #0C0A08;
+  --leaf-blank: #D8CCB2;
+  --walk-paper: #14110D;
+  --btn-hover: #FFF8EA;
+  color-scheme: dark;
+}
+
+/* A lapon belül a tokenek a papír tintájára állnak vissza. */
+.leaf, .glass {
+  --ink: var(--paper-ink);
+  --ink-2: var(--paper-ink-2);
+  color: var(--paper-ink);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--paper);
+}
+
+h1, h2, p, ol, figure { margin: 0; }
+
+button, input, textarea { font: inherit; color: inherit; }
+
+code, .mono {
+  font-family: var(--mono);
+  font-size: 0.8em;
+  font-variant-ligatures: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* A saját hostolású latin részhalmazban nincs smcp: a kiskapitálist versálissal szedjük. */
+.smallcaps {
+  text-transform: uppercase;
+  font-size: 0.8em;
+  letter-spacing: 0.07em;
+}
+
+.meta {
+  font-size: 16px;
+  color: var(--ink-3);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.meta .mono { color: var(--ink); }
+
+/* ---------- Vezérlők: szöveges linkek, egy tintagomb ---------- */
+
+.link {
+  background: transparent;
+  border: 0;
+  padding: 0 2px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.link:hover { text-decoration-thickness: 2px; }
+.link:disabled { color: var(--ink-3); cursor: default; }
+.link--large { font-size: 20px; }
+.link--quiet { color: var(--ink-3); }
+.link--inverse { color: var(--paper); }
+.link--inverse:hover { color: var(--paper); text-decoration-thickness: 2px; }
+
+.btn-ink {
+  background: var(--ink);
+  color: var(--paper);
+  border: 0;
+  padding: 14px 26px;
+  min-height: 52px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.btn-ink:hover { background: var(--btn-hover); }
+
+.field-label {
+  font-size: 18px;
+  color: var(--ink-3);
+}
+
+.error {
+  border-left: 3px solid var(--ink);
+  padding-left: 12px;
+  font-size: 17px;
+  line-height: 1.45;
+  max-width: 40em;
+}
+
+.check {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  font-size: 17px;
+  color: var(--ink-2);
+}
+
+input[type='radio'], input[type='checkbox'] {
+  accent-color: var(--ink);
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+/* ---------- Az oldal kerete ---------- */
+
+.site {
+  max-width: 1228px;
+  margin: 0 auto;
+  padding: 48px 24px 40px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  font-variant-numeric: oldstyle-nums;
+}
+
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px 24px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 4px;
+}
+
+.wordmark {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  min-height: 44px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-size: 15px;
+}
+
+.sections {
+  display: flex;
+  gap: 0 26px;
+  flex-wrap: wrap;
+}
+
+.nav-link {
+  background: transparent;
+  border: 0;
+  padding: 0 2px;
+  min-height: 44px;
+  font-size: 18px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.nav-link:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+
+.nav-link[aria-current='page'] {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.count {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--ink-3);
+  margin-left: 6px;
+}
+
+.view { flex: 1; }
+
+.colophon-end { display: flex; gap: 6px 22px; flex-wrap: wrap; align-items: baseline; }
+.langs { display: inline-flex; gap: 14px; }
+
+.lang {
+  background: transparent;
+  border: 0;
+  padding: 0 2px;
+  min-height: 44px;
+  color: var(--ink-3);
+  cursor: pointer;
+  text-underline-offset: 4px;
+}
+
+.lang:hover { text-decoration: underline; }
+.lang[aria-pressed='true'] { color: var(--ink); text-decoration: underline; text-decoration-thickness: 1px; }
+.view:focus { outline: none; }
+
+.colophon {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px 24px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--ink);
+  padding-top: 14px;
+  font-size: 16px;
+  color: var(--ink-3);
+}
+
+.display {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(44px, 5.4vw, 68px);
+  line-height: 1;
+  letter-spacing: -0.005em;
+}
+
+.display--page { font-size: clamp(40px, 4.2vw, 52px); }
+
+.lede {
+  font-size: clamp(20px, 1.7vw, 23px);
+  line-height: 1.4;
+  max-width: 30em;
+}
+
+.lede--small { font-size: clamp(19px, 1.5vw, 21px); max-width: 34em; }
+
+/* ---------- Find a line ---------- */
+
+.landing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 48px 64px;
+  align-items: flex-start;
+}
+
+.landing-main {
+  flex: 999 1 560px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
+.intro { display: flex; flex-direction: column; gap: 16px; }
+
+.find { display: flex; flex-direction: column; gap: 14px; }
+
+.find-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.find-input {
+  flex: 1 1 340px;
+  min-width: 0;
+  font-size: clamp(26px, 2.4vw, 34px);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid var(--ink);
+  border-radius: 0;
+  padding: 6px 0 8px;
+}
+
+.find-input::placeholder {
+  color: var(--placeholder);
+  font-style: italic;
+}
+
+.find-input:focus-visible { outline-offset: 6px; }
+
+.rule, .changes {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink-3);
+  max-width: 40em;
+}
+
+.rule code, .changes code {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.changes { color: var(--ink-2); }
+
+.changes code {
+  background: var(--field);
+  padding: 0 3px;
+  white-space: pre-wrap;
+}
+
+.modes {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 0 28px;
+  flex-wrap: wrap;
+}
+
+.modes label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+}
+
+.random {
+  display: flex;
+  gap: 0 22px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-size: 20px;
+}
+
+.random-lead { font-style: italic; color: var(--ink-3); }
+
+.only-narrow { display: none; }
+
+.last-read, .notice {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 16px 0;
+  display: flex;
+  gap: 8px 24px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.notice { flex-direction: column; align-items: flex-start; }
+
+.last-read > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.last-read .smallcaps { font-size: 14px; color: var(--ink-3); }
+.last-title { font-size: 22px; font-style: italic; overflow-wrap: anywhere; }
+
+.link-row { display: flex; gap: 0 22px; flex-wrap: wrap; }
+
+.plan {
+  flex: 1 1 360px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.plan-drawing {
+  width: 100%;
+  height: auto;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+.plan-solid { fill: var(--paper); }
+.plan-hatch { stroke: var(--ink-3); stroke-width: 0.8; }
+.plan-walls { fill: var(--rule); }
+.plan-case { stroke: var(--ink); stroke-width: 0.7; }
+.plan-stair { fill: none; stroke: var(--ink); stroke-width: 0.7; }
+.plan-room, .plan-hall { fill: var(--plan-shaft); }
+.plan-edge { fill: none; stroke: var(--ink); stroke-width: 0.9; stroke-linecap: square; }
+.plan-shaft { fill: var(--paper-2); stroke: var(--ink); stroke-width: 0.7; stroke-dasharray: 2 2; }
+.plan-target { fill: none; stroke: var(--rubric-ui); stroke-width: 2.2; }
+
+.plan figcaption {
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+.plan figcaption .smallcaps { color: var(--ink-2); }
+
+.footnote { display: block; margin-top: 8px; font-style: italic; }
+
+/* ---------- Go to an address ---------- */
+
+.address-view {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px 72px;
+  align-items: flex-start;
+}
+
+.address-form {
+  flex: 3 1 480px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.address-form .field-label { margin-top: 8px; }
+
+.address-input {
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 21px;
+  background: var(--field);
+  border: 0;
+  border-bottom: 2px solid var(--ink);
+  border-radius: 0;
+  padding: 12px 14px;
+  resize: vertical;
+  word-break: break-all;
+}
+
+.address-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.address-row .meta { font-size: 17px; }
+
+.aside {
+  flex: 2 1 300px;
+  min-width: 0;
+  border-top: 1px solid var(--ink);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.aside .smallcaps { color: var(--ink); }
+.aside .link { min-height: 0; display: inline; }
+
+/* ---------- Your pages ---------- */
+
+.pages-view { display: flex; flex-direction: column; gap: 40px; }
+
+.pages-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px 24px;
+  flex-wrap: wrap;
+}
+
+.register {
+  list-style: none;
+  padding: 0;
+  border-top: 1px solid var(--ink);
+}
+
+.register-row {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 2fr) minmax(0, 3fr);
+  gap: 8px 24px;
+  align-items: center;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.register-title { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.register-title h2 {
+  font-weight: 400;
+  font-style: italic;
+  font-size: 25px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.register-place { font-size: 16px; color: var(--ink-2); font-variant-numeric: lining-nums tabular-nums; }
+
+.register-actions {
+  display: flex;
+  gap: 0 22px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  font-size: 17px;
+}
+
+.rename {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.rename input {
+  font-style: italic;
+  font-size: 24px;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1.5px solid var(--ink);
+  border-radius: 0;
+  padding: 2px 0;
+}
+
+.empty { display: flex; flex-direction: column; gap: 12px; max-width: 36em; }
+.empty-title { font-size: 26px; font-style: italic; }
+.empty p:not(.empty-title) { color: var(--ink-2); }
+
+.pages-foot { margin-top: auto; }
+
+/* ---------- Értesítő ---------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  z-index: 80;
+  width: min(560px, calc(100vw - 32px));
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px 16px;
+  flex-wrap: wrap;
+  font-size: 18px;
+  line-height: 1.4;
+  animation: toast-in 180ms ease-out;
+}
+
+.toast > span { padding: 4px 0; }
+
+/* A könyv fölött felül: alul a lapozó és a lap alja van, azt nem takarhatja. */
+.toast--top { top: 6px; bottom: auto; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+}
+
+/* ---------- A nyitott könyv ---------- */
+
+.book {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--table);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 48px 10px;
+  overflow: hidden;
+  animation: book-in 260ms ease-out;
+}
+
+.book:focus { outline: none; }
+
+@keyframes book-in { from { opacity: 0; } }
+
+.book-top, .book-nav {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  font-size: 17px;
+}
+
+.book-top { grid-template-columns: auto minmax(0, 1fr) auto; }
+.book-top > :last-child, .book-nav > :last-child { justify-self: end; }
+
+.book-place { font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.book-place .mono { font-size: 14px; }
+
+.book-status {
+  font-style: italic;
+  color: var(--ink-2);
+  text-align: center;
+  font-variant-numeric: lining-nums;
+}
+
+.book-status .link { min-height: 0; display: inline; font-style: normal; }
+.book-results { display: inline-flex; gap: 0 12px; align-items: baseline; font-style: normal; margin-left: 6px; padding-left: 12px; border-left: 1px solid var(--rule); white-space: nowrap; }
+.book-results > span { color: var(--ink-3); font-variant-numeric: lining-nums; }
+.book-results .link:disabled { color: var(--ink-3); text-decoration-color: transparent; cursor: default; }
+
+.book-stage {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-frame {
+  background: var(--cover);
+  padding: 10px 12px 12px;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 #1E2721, 0 18px 30px -18px rgba(40, 30, 15, 0.55);
+  perspective: 2600px;
+}
+
+.spread {
+  position: relative;
+  display: flex;
+  transform-style: preserve-3d;
+}
+
+.leaf {
+  position: relative;
+  width: var(--page-w);
+  background: var(--leaf);
+  padding: 26px 26px 14px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.leaf--left {
+  padding: 26px 26px 14px 22px;
+  box-shadow: -1px 1px 0 #DDD3BE, -2px 2px 0 var(--leaf), -3px 3px 0 #D7CCB4, -4px 4px 0 #EDE5D3,
+    inset -34px 0 28px -26px rgba(60, 45, 25, 0.28);
+}
+
+.leaf--right {
+  padding: 26px 40px 14px 8px;
+  box-shadow: 1px 1px 0 #DDD3BE, 2px 2px 0 var(--leaf), 3px 3px 0 #D7CCB4, 4px 4px 0 #EDE5D3,
+    inset 34px 0 28px -26px rgba(60, 45, 25, 0.28);
+}
+
+.leaf--single {
+  box-shadow: 1px 1px 0 #DDD3BE, 2px 2px 0 var(--leaf), 3px 3px 0 #D7CCB4, 4px 4px 0 #EDE5D3;
+}
+
+.leaf--blank { background: var(--leaf-blank); }
+
+.book-frame--opening .spread > .leaf--left { visibility: hidden; }
+
+.running-head {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.2;
+}
+
+.folio {
+  text-align: center;
+  font-size: 15px;
+  color: var(--ink-2);
+  font-variant-numeric: lining-nums;
+  line-height: 1.2;
+}
+
+.lines {
+  position: relative;
+  font-family: var(--mono);
+  font-size: var(--fs);
+  line-height: var(--lh);
+  font-variant-ligatures: none;
+  white-space: pre;
+  color: var(--ink-page);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  /* A margó a görgető dobozon belül van, különben a rubrika-jel levágódna. */
+  padding-left: 18px;
+}
+
+.line { display: flex; height: var(--lh); }
+
+.line-margin {
+  width: 18px;
+  margin-left: -18px;
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+
+.line-tick {
+  display: block;
+  width: 12px;
+  height: 2px;
+  background: var(--rubric);
+}
+
+.line-text { width: 80ch; overflow-x: clip; }
+
+mark {
+  background: transparent;
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--rubric);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+.ribbon {
+  position: absolute;
+  top: -10px;
+  right: 34px;
+  width: 22px;
+  height: 92px;
+  background: var(--rubric);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%);
+  z-index: 2;
+}
+
+.leaf--left .ribbon { right: 24px; }
+
+/* Lapozás: a forduló lap a gerinc körül fordul, két oldalán valódi szöveggel. */
+.flip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--page-w);
+  transform-style: preserve-3d;
+  z-index: 5;
+}
+
+.flip--right {
+  left: var(--page-w);
+  transform-origin: left center;
+  animation: flip-next 620ms cubic-bezier(0.45, 0.05, 0.35, 1) forwards;
+}
+
+.flip--left {
+  left: 0;
+  transform-origin: right center;
+  animation: flip-prev 620ms cubic-bezier(0.45, 0.05, 0.35, 1) forwards;
+}
+
+.flip--cover { animation-duration: 900ms; animation-delay: 120ms; }
+
+.flip-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flip-face > .leaf { flex: 1; }
+.flip-face .lines { overflow: hidden; }
+.flip-face--back { transform: rotateY(180deg); }
+
+.cover {
+  background: var(--cover);
+  border-radius: 0 3px 3px 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-spine {
+  color: #CFC3A6;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 14px;
+}
+
+@keyframes flip-next {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(-180deg); }
+}
+
+@keyframes flip-prev {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(180deg); }
+}
+
+.book-bottom {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.book-actions {
+  display: flex;
+  gap: 0 28px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.kept { display: inline-flex; align-items: center; gap: 0.3em; }
+
+.turn { white-space: nowrap; }
+
+.book-keys {
+  text-align: center;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+/* Telefon: bélyegkép + nagyító. */
+.book--phone {
+  padding: 12px 18px 16px;
+  gap: 10px;
+}
+
+.book--phone .book-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+}
+
+.book--phone .book-place .mono { font-size: 13px; }
+
+.book--phone .book-status {
+  font-size: 16px;
+  text-align: left;
+  width: 100%;
+}
+
+.book--phone .book-stage { align-items: flex-start; overflow-y: auto; }
+
+.phone-page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.leaf--thumb {
+  width: auto;
+  padding: 16px 14px 10px 16px;
+  gap: 8px;
+  box-shadow: 1px 1px 0 #DDD3BE, 2px 2px 0 var(--leaf), 3px 3px 0 #D7CCB4, 0 14px 22px -14px rgba(40, 30, 15, 0.5);
+}
+
+.leaf--thumb .running-head, .leaf--thumb .folio { font-size: 9px; }
+.leaf--thumb .lines { overflow: visible; cursor: crosshair; color: #3A342B; }
+.leaf--thumb .line-margin { display: none; }
+.leaf--thumb .lines { padding-left: 0; }
+.leaf--thumb mark { text-decoration: none; color: var(--rubric); }
+.leaf--thumb .ribbon { top: -6px; right: 14px; width: 12px; height: 46px; }
+
+.glass-frame {
+  position: absolute;
+  border: 1px solid var(--rubric);
+  pointer-events: none;
+}
+
+.glass {
+  width: 100%;
+  max-width: 420px;
+  background: var(--leaf);
+  border: 1px solid var(--rubric-ui);
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.glass-label { font-style: italic; font-size: 16px; color: var(--ink-2); }
+
+.glass-rows {
+  font-family: var(--mono);
+  font-size: min(16px, calc((100vw - 70px) / 24));
+  line-height: 1.6;
+  white-space: pre;
+  font-variant-ligatures: none;
+}
+
+.glass-hint { font-size: 15px; color: var(--ink-2); }
+
+.book--phone .book-bottom { gap: 4px; }
+.book--phone .book-actions { justify-content: space-between; gap: 0 14px; font-size: 16px; }
+.book--phone .book-nav { display: flex; justify-content: space-between; border-top: 1px solid var(--rule); font-size: 16px; }
+.book--phone .turn { white-space: normal; text-align: left; }
+.book--phone .turn:last-child { text-align: right; }
+
+/* „Read it large / Read it all”: a lap teljes szövege, sorszámmal. */
+.reader {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+}
+
+.reader-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 6px clamp(18px, 4vw, 48px);
+  border-bottom: 1px solid var(--ink);
+  font-size: 17px;
+}
+
+.reader-body {
+  flex: 1;
+  overflow: auto;
+  padding: 20px clamp(18px, 4vw, 48px) 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.reader-page h2 {
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 14px;
+  color: var(--ink-2);
+  margin-bottom: 8px;
+}
+
+.reader-lines {
+  font-family: var(--mono);
+  font-size: 16px;
+  line-height: 1.75;
+  white-space: pre;
+  font-variant-ligatures: none;
+  padding-left: 4.2ch;
+  color: var(--ink);
+}
+
+.reader mark { text-decoration-color: var(--rubric-ui); }
+
+/* „How far is it?”: rövid szöveg a reader-lapon, olvasható sorhosszal. */
+.far {
+  gap: 14px;
+  font-size: 20px;
+  line-height: 1.5;
+  align-items: center;
+  padding-top: clamp(20px, 6vh, 64px);
+}
+
+.far > * { width: 100%; max-width: 1120px; }
+
+.far-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 34em) minmax(280px, 400px);
+  gap: 24px 56px;
+  align-items: start;
+}
+
+.far-text { display: flex; flex-direction: column; gap: 14px; }
+
+/* Fig. 2: a legrövidebb út vázlata, a Fig. 1 tollával. */
+.far-fig { position: sticky; top: 0; font-size: 16px; line-height: 1.45; color: var(--ink-3); }
+.far-fig figcaption { margin-top: 8px; }
+.far-fig figcaption .smallcaps { color: var(--ink-2); }
+.far-sketch { display: block; width: 100%; height: auto; overflow: visible; }
+.far-route { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.far-route--stairs { stroke-width: 1.2; }
+.far-plane { fill: none; stroke: var(--ink-3); stroke-width: 0.8; stroke-dasharray: 3 3; }
+.far-room--ghost { fill: none; stroke: var(--ink-3); stroke-width: 0.6; stroke-dasharray: 1.5 2; }
+.far-room { fill: var(--plan-shaft); stroke: var(--ink); stroke-width: 0.9; }
+.far-room--passed { stroke: var(--ink-3); stroke-dasharray: 2 2; }
+.far-room--here { stroke: var(--rubric-ui); stroke-width: 1.8; }
+.far-tick { stroke: var(--ink-2); stroke-width: 0.9; }
+.far-label, .far-note { fill: var(--ink-2); font-family: var(--serif); font-style: italic; font-size: 13px; }
+.far-note--here { fill: var(--rubric-ui); }
+.far-break { fill: var(--ink); font-family: var(--serif); font-size: 16px; }
+.far-scale path { stroke: var(--ink-2); stroke-width: 1; fill: none; }
+
+@media (max-width: 900px) {
+  .far-layout { grid-template-columns: minmax(0, 1fr); }
+  .far-fig { position: static; max-width: 440px; }
+}
+
+.far h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+
+.far-num { white-space: nowrap; font-variant-numeric: lining-nums; }
+
+.far sup { font-size: 0.7em; line-height: 0; }
+
+.reader-lines li::marker {
+  color: var(--ink-3);
+  font-size: 13px;
+}
+
+/* ---------- A könyvtárról ---------- */
+
+.about {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 40em);
+  gap: 56px;
+  align-items: start;
+}
+
+.about-toc { position: sticky; top: 24px; font-size: 16px; line-height: 1.5; }
+.about-toc ol { list-style: none; display: flex; flex-direction: column; gap: 6px; padding: 0; }
+.about-toc a { color: var(--ink-2); text-decoration: none; }
+.about-toc a:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+
+.about-text { font-size: 19px; line-height: 1.6; }
+.about-text h1 { font-family: var(--display); font-weight: 400; font-size: 44px; line-height: 1.1; margin-bottom: 24px; }
+.about-text section { margin-bottom: 40px; scroll-margin-top: 24px; }
+.about-text h2 {
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 15px;
+  color: var(--ink-2);
+  border-top: 1px solid var(--rule);
+  padding-top: 14px;
+  margin-bottom: 12px;
+}
+.about-text p, .about-text ul, .about-text ol { margin-bottom: 14px; }
+.about-text ul, .about-text ol { padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; }
+.about-text code { font-family: var(--mono); font-size: 0.82em; }
+.about-text sup { font-size: 0.7em; line-height: 0; }
+
+.about-formula {
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--paper-2);
+  border-left: 2px solid var(--rule);
+  padding: 10px 14px;
+  margin: 4px 0 16px;
+}
+
+@media (max-width: 900px) {
+  .about { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .about-toc { position: static; }
+  .about-toc ol { flex-direction: row; flex-wrap: wrap; gap: 4px 16px; }
+}
+
+/* ---------- Keskeny képernyő ---------- */
+
+@media (max-width: 720px) {
+  :root { font-size: 17px; }
+  .site { padding: 28px 18px 28px; gap: 32px; }
+  .nav-link--wide { display: none; }
+  .only-narrow { display: inline-flex; }
+  .plan { display: none; }
+  .landing-main { gap: 26px; }
+  .find-row .btn-ink { flex: 1 1 100%; }
+  .random { font-size: 18px; }
+  .register-row { grid-template-columns: 1fr; gap: 6px; }
+  .register-actions { justify-content: flex-start; }
+  .toast { bottom: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Amíg a séta csomagja tölt: papír, felirat és kihagyás — sosem üres, sosem csapda. */
+.walk-wait {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--walk-paper);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 0 clamp(16px, 4.5vw, 64px) 22px;
+}
+
+.walk-wait p { font-size: clamp(22px, 2.2vw, 30px); font-style: italic; }
+.walk-wait .link span { color: var(--ink-2); margin-left: 0.3em; }
+
+/* ---------- Nyomtatás: a látható lap(ok) A4-es foliókként ---------- */
+
+.print-folio { display: none; }
+
+@media print {
+  @page { size: A4; margin: 14mm 16mm 12mm; }
+
+  :root, body { background: #fff !important; }
+  body:has(.book) .site,
+  .walk, .toast,
+  .book > :not(.print-folio) { display: none !important; }
+
+  .book {
+    position: static;
+    inset: auto;
+    display: block;
+    padding: 0;
+    overflow: visible;
+    background: none;
+    animation: none;
+  }
+
+  .print-folio { display: block; color: #000; font-family: var(--serif); text-align: left; }
+  .folio { break-inside: avoid; }
+  .folio { break-after: page; }
+  .folio:last-child { break-after: auto; }
+
+  .folio-title {
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border-bottom: 0.6pt solid #000;
+    padding-bottom: 2mm;
+    margin-bottom: 4mm;
+  }
+  .folio-place { font-size: 10pt; margin-bottom: 2mm; }
+  .folio-place .mono { font-family: var(--mono); font-size: 9pt; }
+  .folio-line { font-size: 14pt; font-style: italic; margin-bottom: 3mm; }
+
+  .folio-lines {
+    font-family: var(--mono);
+    font-size: 7.6pt;
+    line-height: 1.32;
+    white-space: pre;
+    font-variant-ligatures: none;
+    padding: 4mm 0 4mm 5mm;
+    border-top: 0.4pt solid #999;
+    border-bottom: 0.4pt solid #999;
+  }
+  .folio-lines mark {
+    background: none;
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: #8F2A19;
+    text-decoration-thickness: 1pt;
+    text-underline-offset: 1.5pt;
+  }
+  .folio-where { font-size: 9.5pt; margin-top: 2mm; }
+
+  .folio-address-label { font-size: 8pt; color: #333; margin-top: 4mm; margin-bottom: 1.5mm; }
+  .folio-address {
+    font-family: var(--mono);
+    font-size: 4.8pt;
+    line-height: 1.22;
+    letter-spacing: 0.02em;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+    color: #222;
+  }
+}
