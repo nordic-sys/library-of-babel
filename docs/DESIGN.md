@@ -101,6 +101,8 @@ loaded by those who walk; Esc skips it, and with reduced motion there is no walk
 
 ## 8. Reading, keeping, sharing
 
+- The About page has its own path, `/about`; the build copies `index.html` to `about/index.html`
+  so a static host serves it directly.
 - The book is a real dialog: focus trap, Esc puts it back, ← → turn pages, ⇧← ⇧→ step between results,
   S keeps the page. Opening pushes one history entry; turning replaces it.
 - Kept pages and the last page read live in `localStorage`, validated on read.
@@ -109,7 +111,9 @@ loaded by those who walk; Esc skips it, and with reduced motion there is no walk
 
 ## 9. Languages (`src/i18n.js`)
 
-English and Hungarian; every visible string comes from the dictionaries, and the tests fail if the two
+English and Hungarian. The first visit opens in Hungarian if Hungarian appears anywhere in the
+browser's language list (an English-language Mac in Hungary lists `en-US, hu-HU`), otherwise in
+English; a choice is remembered. Every visible string comes from the dictionaries, and the tests fail if the two
 key sets differ. Hungarian rule: no case suffix and no article choice directly after a computed numeral
 (“88. oldal”, never “a 88. oldalon”), because the right form depends on how the number is pronounced.
 

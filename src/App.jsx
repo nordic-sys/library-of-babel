@@ -87,8 +87,14 @@ const bookmarkKey = (b) => `${b.address}:${b.version ?? 1}`;
 /** A találat, ha ezen a lapon van (különben null). */
 const hitAt = (hit, address) => (hit?.address === address ? hit : null);
 
+/* Az About saját útvonalon él (/about), a többi nézet a gyökérben. A build az index.html-t az
+   about/index.html-be is lemásolja, így a cím közvetlenül is megnyitható és megosztható. */
+const BASE = import.meta.env.BASE_URL;
+const ABOUT_PATH = `${BASE}about`;
+const viewFromPath = () => (window.location.pathname.replace(/\/+$/, '') === ABOUT_PATH ? 'about' : 'find');
+
 function pageUrl(address, hit) {
-  let url = `?addr=${address}&v=${LIBRARY_VERSION}`;
+  let url = `${BASE}?addr=${address}&v=${LIBRARY_VERSION}`;
   if (hit) url += `&highlight=${encodeURIComponent(hit.text)}&at=${hit.start}`;
   if (hit?.mode) url += `&mode=${hit.mode}`;
   if (hit?.n > 0) url += `&n=${hit.n}`;
@@ -457,7 +463,14 @@ export default function App() {
   const [systemDark, setSystemDark] = useState(() => effectiveTheme(null) === 'dark');
   const theme = themeChoice ?? (systemDark ? 'dark' : 'light');
   const t = useCallback((key, ...args) => translate(lang, key, ...args), [lang]);
-  const [view, setView] = useState('find');
+  const [view, setView] = useState(viewFromPath);
+  /* Nézetváltás: az About-ba be- és onnan kilépés előzmény-bejegyzés, így a Back visszavisz. */
+  const go = useCallback((next) => {
+    setView(next);
+    const onAbout = viewFromPath() === 'about';
+    if (next === 'about' && !onAbout) window.history.pushState(null, '', ABOUT_PATH);
+    else if (next !== 'about' && onAbout) window.history.pushState(null, '', BASE);
+  }, []);
   const [bookmarks, setBookmarks] = useState(readBookmarks);
   const [lastRead, setLastRead] = useState(readLastRead);
   const [skipWalk, setSkipWalk] = useState(readSkipWalk);
@@ -536,7 +549,10 @@ export default function App() {
       remember(target.address, hit, 'link');
     };
     fromUrl(true);
-    const onPopState = () => fromUrl(false);
+    const onPopState = () => {
+      fromUrl(false);
+      setView((v) => (viewFromPath() === 'about' ? 'about' : v === 'about' ? 'find' : v));
+    };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, [remember]);
@@ -597,7 +613,7 @@ export default function App() {
 
   const copy = useCallback(async (kind, address) => {
     const value = kind === 'link'
-      ? `${window.location.origin}${window.location.pathname}${pageUrl(address, hitAt(reading?.hit, address))}`
+      ? `${window.location.origin}${pageUrl(address, hitAt(reading?.hit, address))}`
       : address;
     try {
       await navigator.clipboard.writeText(value);
@@ -675,8 +691,10 @@ export default function App() {
   /* A dokumentum nyelve és címe kövesse a választást (felolvasó, fordító, fül-cím). */
   useEffect(() => {
     document.documentElement.lang = lang;
-    document.title = translate(lang, 'title');
-  }, [lang]);
+    document.title = view === 'about'
+      ? `${translate(lang, 'nav.about')} — ${translate(lang, 'title')}`
+      : translate(lang, 'title');
+  }, [lang, view]);
 
   /* A rendszer váltását is kövessük, amíg nincs saját választás. */
   useEffect(() => {
@@ -718,7 +736,7 @@ export default function App() {
     <LayoutContext.Provider value={layout}>
       <div className="site" inert={overlayOpen}>
         <header className="masthead">
-          <button type="button" className="wordmark" onClick={() => setView('find')}>{t('title')}</button>
+          <button type="button" className="wordmark" onClick={() => go('find')}>{t('title')}</button>
           <nav aria-label={t('nav.aria')} className="sections">
             {VIEWS.map((id) => (
               <button
@@ -726,7 +744,7 @@ export default function App() {
                 type="button"
                 className={`nav-link${id === 'find' || id === 'address' || id === 'about' ? ' nav-link--wide' : ''}`}
                 aria-current={view === id ? 'page' : undefined}
-                onClick={() => setView(id)}
+                onClick={() => go(id)}
               >
                 {t(`nav.${id}`)}
                 {id === 'pages' && <span className="count">{bookmarks.length}</span>}
@@ -745,7 +763,7 @@ export default function App() {
                 const address = randomAddress();
                 open(address - (address % 410n), { origin: 'random' });
               }}
-              onAddress={() => setView('address')}
+              onAddress={() => go('address')}
               lastRead={lastRead}
               onReturn={() => showBook({
                 address: lastRead.address,
@@ -790,7 +808,7 @@ export default function App() {
               })}
               onRename={renameBookmark}
               onRemove={(bm) => removeBookmark(bm, 'toast.removed')}
-              onFind={() => setView('find')}
+              onFind={() => go('find')}
             />
           )}
         </div>
@@ -798,7 +816,7 @@ export default function App() {
         <footer className="colophon">
           <p>
             {t('colophon.after')} <i>La biblioteca de Babel</i> · Buenos Aires, 1941 ·{' '}
-            <button type="button" className="link" onClick={() => { setView('about'); window.scrollTo(0, 0); }}>{t('nav.about')}</button>
+            <button type="button" className="link" onClick={() => { go('about'); window.scrollTo(0, 0); }}>{t('nav.about')}</button>
           </p>
           <p className="colophon-end">
             <span>{t('colophon.private')}</span>

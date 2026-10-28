@@ -16,8 +16,10 @@ export function detectLang() {
     const saved = localStorage.getItem(LANG_KEY);
     if (LANGS.includes(saved)) return saved;
   } catch { /* privát mód: a böngésző nyelve dönt */ }
-  const nav = typeof navigator === 'undefined' ? '' : (navigator.languages?.[0] ?? navigator.language ?? '');
-  return nav.toLowerCase().startsWith('hu') ? 'hu' : 'en';
+  // Csak két nyelvünk van, ezért a böngésző teljes nyelvlistáját nézzük, nem csak az elsőt: egy
+  // angol felületű magyar gépen (en-US, hu-HU) is magyarul nyílik.
+  const navs = typeof navigator === 'undefined' ? [] : (navigator.languages?.length ? navigator.languages : [navigator.language ?? '']);
+  return navs.some((l) => String(l).toLowerCase().startsWith('hu')) ? 'hu' : 'en';
 }
 
 export function saveLang(lang) {

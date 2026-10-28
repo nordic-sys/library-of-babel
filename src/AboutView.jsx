@@ -166,6 +166,14 @@ function Hu({ f }) {
           <li>A könyvtár „határtalan és periodikus” — <b>átvettük</b> a lapozásban: az utolsó lap után a
             nullás cím következik.</li>
         </ul>
+        <p>
+          A novelláról bővebben a Wikipédián:{' '}
+          <a href="https://hu.wikipedia.org/wiki/B%C3%A1beli_k%C3%B6nyvt%C3%A1r" lang="hu">magyarul</a>,{' '}
+          <a href="https://en.wikipedia.org/wiki/The_Library_of_Babel" lang="en">angolul</a> és{' '}
+          <a href="https://es.wikipedia.org/wiki/La_biblioteca_de_Babel" lang="es">spanyolul</a>. Magát a
+          novellát nem közöljük és nem linkeljük, mert ma is szerzői jogi védelem alatt áll; nyomtatott
+          kiadásban olvasható.
+        </p>
       </section>
 
       <section id="about-numbers">
@@ -473,6 +481,14 @@ function En({ f }) {
           <li>The library is “unlimited and periodic” — <b>kept</b> in turning the pages: after the last page
             comes address 0.</li>
         </ul>
+        <p>
+          More about the story on Wikipedia:{' '}
+          <a href="https://en.wikipedia.org/wiki/The_Library_of_Babel" lang="en">in English</a>,{' '}
+          <a href="https://es.wikipedia.org/wiki/La_biblioteca_de_Babel" lang="es">in Spanish</a> and{' '}
+          <a href="https://hu.wikipedia.org/wiki/B%C3%A1beli_k%C3%B6nyvt%C3%A1r" lang="hu">in Hungarian</a>.
+          The story itself is not reproduced or linked here, as it is still under copyright; it can be read
+          in print.
+        </p>
       </section>
 
       <section id="about-numbers">

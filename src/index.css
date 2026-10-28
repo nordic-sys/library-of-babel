@@ -1111,6 +1111,8 @@ mark {
 }
 .about-text p, .about-text ul, .about-text ol { margin-bottom: 14px; }
 .about-text ul, .about-text ol { padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; }
+.about-text p a { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+.about-text p a:hover { text-decoration-thickness: 2px; }
 .about-text code { font-family: var(--mono); font-size: 0.82em; }
 .about-text sup { font-size: 0.7em; line-height: 0; }
 
